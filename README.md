@@ -131,11 +131,11 @@ const documentado = await documentarCodigo('function sumar(a, b) { return a + b;
 ## 5. Pruebas
 
 ```bash
-npm test        # 25 pruebas con Jest: no necesitan clave de API ni internet
+npm test        # 170 pruebas con Jest: no necesitan clave de API ni internet
 npm run lint    # ESLint con reglas recomendadas y de seguridad (eslint-plugin-security)
 ```
 
-Las pruebas usan clientes de IA y `fetch` falsos, así no gastan cuota. Incluyen pruebas de abuso (inyección de prompt, nombre de modelo que intenta cambiar la URL, errores que podrían filtrar la clave).
+Las pruebas usan clientes de IA y `fetch` falsos, así no gastan cuota. Desde la semana 7 hay además pruebas de reglas (ver [`registro_pruebas.md`](registro_pruebas.md)). Incluyen pruebas de abuso (inyección de prompt, nombre de modelo que intenta cambiar la URL, errores que podrían filtrar la clave).
 
 ## 6. Estructura
 
@@ -146,11 +146,18 @@ proyecto-semi/
 │   ├── clienteGemini.js       # Cliente de IA real (API REST de Gemini), cumple generar(prompt)
 │   └── cli.js                 # Línea de comandos (modo Gemini y modo --demo)
 ├── tests/
-│   ├── documentador.test.js
-│   ├── clienteGemini.test.js
-│   └── cli.test.js
+│   ├── documentador.test.js          # semana 5-6
+│   ├── clienteGemini.test.js         # semana 5-6
+│   ├── cli.test.js                   # semana 5-6
+│   ├── documentarCodigo.reglas.test.js   # semana 7: particiones, límites y tabla de decisión
+│   ├── clienteGemini.reglas.test.js      # semana 7
+│   ├── cli.reglas.test.js                # semana 7
+│   ├── datosSinteticos.test.js           # semana 7
+│   ├── ayudas.js                         # ayudas compartidas (no son pruebas)
+│   └── fixtures/datosSinteticos.js       # datos de prueba sintéticos
 ├── ejemplos/sumar.js          # Archivo de entrada para probar la CLI
 ├── revision_seguridad.md      # Informe de revisión de código y seguridad (semana 6)
+├── registro_pruebas.md        # Reglas, tablas de casos, revisión, errores provocados y datos (semana 7)
 ├── bitacora_ia.md             # Bitácora de uso de IA
 ├── eslint.config.js           # Configuración del linter
 ├── .env.example               # Plantilla de variables de entorno (sin claves)

@@ -2,7 +2,7 @@
 
 Proyecto: Sistema Automatizado de Documentación de Código (JSDoc) con IA
 Estudiante: Jhoan rifaldo
-Funcionalidad: HU-01 Documentar un bloque de código con JSDoc (`documentarCodigo`); semana 6: revisión de calidad y seguridad
+Funcionalidad: HU-01 Documentar un bloque de código con JSDoc (`documentarCodigo`); semana 6: revisión de calidad y seguridad; semana 7: suite de pruebas y registro de pruebas
 Asistente usado: Claude (Anthropic), modo chat/agente
 
 ## Entradas
@@ -106,19 +106,59 @@ Asistente usado: Claude (Anthropic), modo chat/agente
 - **Verificación:** En una carpeta limpia (`git clone` + `npm ci`): `npm test` → 25/25, `npm run lint` → 0 avisos, `npm run demo` funciona, y sin clave la CLI muestra un error claro. Con una clave falsa, el error no muestra la clave.
 - **Commit relacionado:** merge de `semana6-revision` en `main`
 
+### Entrada 12 — Semana 7: diseño de casos con IA
+
+- **Fecha:** 2026-11-21
+- **Prompt o sugerencia:** Le di al asistente (Claude) el PDF de la tarea de la semana 7 y el repositorio, y le pedí que escribiera las reglas de tres funciones y las tablas de casos con particiones de equivalencia, valores límite y tablas de decisión. La IA eligió `documentarCodigo`, `crearClienteGemini` y `main` de la CLI, y propuso la tabla de decisión de `documentarCodigo` (5 condiciones).
+- **Decisión:** Aceptada con cambios
+- **Por qué:** Revisé la propuesta con las cinco preguntas. Los esperados salen del README y de los `@throws`, no de ejecutar el código. Encontré 7 ambigüedades (sección 1.4 de `registro_pruebas.md`), por ejemplo: el README dice que «se ignoran espacios» pero el límite de 10.000 se mide con espacios, y el código solo exige `/**` aunque el README pide un bloque `/** ... */`. No fijé con pruebas las reglas dudosas.
+- **Verificación:** Comprobé a mano las dos ambigüedades que parecían defectos (respuesta con charla antes de la cerca, y `/**` sin cerrar) y las dejé como hallazgos para el docente en lugar de cambiar el contrato de la semana 6.
+- **Commit relacionado:** (ver historial de la semana 7)
+
+### Entrada 13 — Semana 7: generación de las pruebas
+
+- **Fecha:** 2026-11-21
+- **Prompt o sugerencia:** «Escribe las pruebas a partir de la regla y de la tabla revisada, con una fila por caso (`test.each` con un comentario por fila), errores con tipo y mensaje exactos y esperados fijos; no modifiques `src/`». El proyecto usa Jest, así que se adaptó lo que la guía pide en pytest. La IA generó 4 archivos de pruebas nuevos (154 pruebas).
+- **Decisión:** Aceptada con cambios
+- **Por qué:** Revisé cada prueba con las tres preguntas. Corregí una cuya comparación copiaba el texto del modo demo del código (el esperado no salía de la regla) y descarté 6 redundantes (detalle en la sección 2 del registro). Quedaron 145 pruebas nuevas.
+- **Verificación:** `npx jest`: 170 de 170 pasan (25 anteriores + 145 nuevas) con `src/` sin modificar, y `npm run lint` sin avisos. Ningún esperado se ajustó para que pasara.
+- **Commit relacionado:** (ver historial de la semana 7)
+
+### Entrada 14 — Semana 7: romper el código a propósito
+
+- **Fecha:** 2026-11-21
+- **Prompt o sugerencia:** «Introduce errores a propósito en `src/`, uno a la vez (cambiar `>` por `>=`, un valor, una condición), ejecuta las pruebas después de cada uno, deshaz el cambio y anota qué prueba falló». Se hicieron 33 errores.
+- **Decisión:** Aceptada con cambios
+- **Por qué:** En la primera ejecución 4 errores sobrevivieron y uno no se aplicó (mi patrón estaba mal). Dos revelaron pruebas que faltaban: quitar el `trim` antes de limpiar la respuesta (M08) y no cancelar el temporizador (M27); agregué un caso para cada uno. M09 depende de una ambigüedad de la regla y M17 es un mutante equivalente (`[undefined].join('')` ya da `''`).
+- **Verificación:** Después de cada error ejecuté todas las pruebas y deshice el cambio con `git checkout -- <archivo>`; `git status` quedó sin cambios en `src/`. Resultado final: 31 de 33 detectados y 2 explicados (sección 3 del registro).
+- **Commit relacionado:** (ver historial de la semana 7)
+
+### Entrada 15 — Semana 7: datos sintéticos
+
+- **Fecha:** 2026-11-21
+- **Prompt o sugerencia:** «Genera datos sintéticos con contexto local (Huila, café), sin personas reales, con teléfonos ficticios y casos difíciles: tildes, ñ, apóstrofo, texto vacío, valores en cero». La IA generó 10 fragmentos de código en `tests/fixtures/datosSinteticos.js`.
+- **Decisión:** Aceptada con cambios
+- **Por qué:** Pedí agregar casos que afectan a este proyecto en particular: comillas invertidas (el código quita cercas de Markdown), saltos de línea `\r\n` y un emoji de 2 unidades UTF-16. Revisé que los nombres fueran inventados y que el teléfono fuera `300 000 0000`.
+- **Verificación:** El fixture se usa en `datosSinteticos.test.js` (21 pruebas) y en `cli.reglas.test.js` (10 pruebas con archivos temporales). Todas pasan y los archivos temporales se borran.
+- **Commit relacionado:** (ver historial de la semana 7)
+
 ## Resumen
 
 | Decisión | Cantidad |
 |---|---|
 | Aceptadas | 4 |
-| Aceptadas con cambios | 4 |
+| Aceptadas con cambios | 8 |
 | Rechazadas | 3 |
 
-(Semana 5: entradas 1–6. Semana 6: entradas 7–11.)
+(Semana 5: entradas 1–6. Semana 6: entradas 7–11. Semana 7: entradas 12–15.)
 
 ## Errores que atraparon las pruebas
 
 La prueba `acepta un código de exactamente 10.000 caracteres (igual al umbral)` falló con la primera implementación del asistente. El código usaba `codigo.length >= 10000`, así que un código de 10.000 caracteres se rechazaba aunque el contrato dice que se acepta. Es el error típico de «uno de más» en un umbral. Lo corregí cambiando la condición a `> 10000`, sin tocar la prueba. La prueba vecina (10.001 caracteres se rechaza) siguió pasando, lo que confirma que el límite quedó justo donde dice el contrato.
+
+## Errores que atrapó la suite de la semana 7
+
+Al introducir 33 errores a propósito, la suite nueva detectó 31, incluido el `>=` por `>` de la semana 5. Dos pruebas que faltaban (espacios antes de la cerca y cancelación del temporizador) salieron de errores que al principio nadie detectaba. No se encontró ningún defecto nuevo en el código.
 
 ## Reflexión final
 
@@ -132,3 +172,7 @@ En la próxima funcionalidad escribiría también una prueba de integración con
 ### Reflexión semana 6
 
 La revisión con IA fue útil para encontrar problemas rápido, pero 3 de sus 8 hallazgos eran falsos positivos y no vio la fuga de la clave por los mensajes de error. Si hubiera copiado su tabla sin verificar, el informe habría tenido errores. Trabajar con el agente en una rama aparte y revisar su diff commit por commit me permitió aceptar los cambios sabiendo qué hacía cada uno.
+
+### Reflexión semana 7
+
+La IA escribió rápido muchas pruebas, pero todas pasaron a la primera, y eso por sí solo no demuestra nada: solo al romper el código a propósito vi que dos pruebas faltaban. También me di cuenta de que una prueba copiaba el esperado del propio código en vez de la regla. Lo más útil fue escribir primero la regla y sus ambigüedades: encontré dos hallazgos (la IA puede devolver charla antes de la cerca y `/**` sin cerrar se acepta) que quiero consultar con el docente en vez de «arreglar» el código sin decidir qué dice la regla.
